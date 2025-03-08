@@ -1,0 +1,134 @@
+syntax = "proto3";
+
+import "google/api/annotations.proto";
+import "validate/validate.proto";
+import "google/protobuf/timestamp.proto";
+
+package library;
+
+option go_package = "github.com/rvekaterina/library/api/library;library";
+
+service Library {
+  rpc AddBook(AddBookRequest) returns (AddBookResponse) {
+    option (google.api.http) = {
+      post: "/v1/library/book"
+      body: "*"
+    };
+  }
+
+  rpc UpdateBook(UpdateBookRequest) returns (UpdateBookResponse) {
+    option (google.api.http) = {
+      put: "/v1/library/book"
+      body: "*"
+    };
+  }
+
+  rpc GetBookInfo(GetBookInfoRequest) returns (GetBookInfoResponse) {
+    option (google.api.http) = {
+      get: "/v1/library/book/{id}"
+    };
+  }
+
+  rpc RegisterAuthor(RegisterAuthorRequest) returns (RegisterAuthorResponse) {
+    option (google.api.http) = {
+      post: "/v1/library/author"
+      body: "*"
+    };
+  }
+
+  rpc ChangeAuthorInfo(ChangeAuthorInfoRequest) returns (ChangeAuthorInfoResponse) {
+    option (google.api.http) = {
+      put: "/v1/library/author"
+      body: "*"
+    };
+  }
+
+  rpc GetAuthorInfo(GetAuthorInfoRequest) returns (GetAuthorInfoResponse) {
+    option (google.api.http) = {
+      get: "/v1/library/author/{id}"
+    };
+  }
+
+  rpc GetAuthorBooks(GetAuthorBooksRequest) returns (stream Book) {
+    option (google.api.http) = {
+      get: "/v1/library/author_books/{author_id}"
+    };
+  }
+}
+
+message Book {
+  string id = 1;
+  string name = 2;
+  repeated string author_id = 3;
+  google.protobuf.Timestamp created_at = 4;
+  google.protobuf.Timestamp updated_at = 5;
+}
+
+message AddBookRequest {
+  string name = 1 [(validate.rules).string = {min_len: 1}];
+  repeated string author_ids = 2 [(validate.rules).repeated = {
+    items: {string: {uuid: true}}
+  }];
+}
+
+message AddBookResponse {
+  Book book = 1;
+}
+
+message UpdateBookRequest {
+  string id = 1 [(validate.rules).string.uuid = true];
+  string name = 2 [(validate.rules).string = {min_len: 1}];
+  repeated string author_ids = 3 [(validate.rules).repeated = {
+    items: {string: {uuid: true}}
+  }];
+}
+
+message UpdateBookResponse {}
+
+message GetBookInfoRequest {
+  string id = 1 [(validate.rules).string.uuid = true];
+}
+
+message GetBookInfoResponse {
+  Book book = 1;
+}
+
+message RegisterAuthorRequest {
+  string name = 1 [(validate.rules).string = {
+    pattern:   "^[A-Za-z0-9]+( [A-Za-z0-9]+)*$",
+    min_len: 1,
+    max_len: 512
+  }];
+}
+
+message RegisterAuthorResponse {
+  string id = 1;
+  google.protobuf.Timestamp created_at = 2;
+  google.protobuf.Timestamp updated_at = 3;
+}
+
+message ChangeAuthorInfoRequest {
+  string id = 1 [(validate.rules).string.uuid = true];
+  string name = 2 [(validate.rules).string = {
+    pattern:   "^[A-Za-z0-9]+( [A-Za-z0-9]+)*$",
+    min_len: 1,
+    max_len: 512
+  }];
+}
+
+message ChangeAuthorInfoResponse {}
+
+message GetAuthorInfoRequest {
+  string id = 1 [(validate.rules).string.uuid = true];
+}
+
+message GetAuthorInfoResponse {
+  string id = 1;
+  string name = 2;
+  google.protobuf.Timestamp created_at = 3;
+  google.protobuf.Timestamp updated_at = 4;
+}
+
+message GetAuthorBooksRequest {
+  string author_id = 1 [(validate.rules).string.uuid = true];
+}
